@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+PLUGIN_BASE_PATH="$PLUGIN_CORE_AVAILABLE_PATH"
+
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$PLUGIN_PATH/pushover_dokku_functions"
+
+case "$1" in
+  pushover:set)
+    set_pushover_settings
+    ;;
+
+  pushover:clear)
+    clear_pushover_settings
+    ;;
+
+  pushover:get)
+    get_pushover_settings
+    ;;
+
+  help)
+	get_pushover_help
+    ;;
+
+  *)
+    exit $DOKKU_NOT_IMPLEMENTED_EXIT
+    ;;
+esac

@@ -1,0 +1,2 @@
+PUSHOVER_CONFIG="pushover.config"
+PUSHOVER_URL="https://api.pushover.net/1/messages.json"

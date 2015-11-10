@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_PATH/pushover_dokku_defines"
+
+APP="$1"
+IMAGE="$2"
+HOSTNAME=$(hostname -f)
+APP_PATH=$(get_app_path "$APP")
+
+if [[ -n "$APP_PATH" -a -f "$APP_PATH/$PUSHOVER_CONFIG" ]]; then
+
+fi

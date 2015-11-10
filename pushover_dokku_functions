@@ -1,0 +1,66 @@
+
+source "$PLUGIN_PATH/pushover_dokku_defines"
+
+get_pushover_help() {
+	cat<<EOF
+pushover:set [app] <token> <userId>, Set Pushover token and user ID to send messages to
+pushover:clear [app], Clears Pushover settings for the indicated app
+pushover:get [app], Display Pushover settings for the indicated app
+EOF
+}
+
+is_param_app() {
+	local APP="$1"
+	if [[ ! -n "$APP" ]]; then 
+		return false
+	elif [[ ! -d "$DOKKU_ROOT/$APP" ]]; then
+		return false
+	else
+		return true
+	fi
+}
+
+get_app_path() {
+	local APP="$1"
+	if [[ -n "$APP" -a -d "$DOKKU_ROOT/$APP" ]]; then 
+		return "$DOKKU_ROOT/$APP"
+	elif [[ -n "$APP" -a ! -d "$DOKKU_ROOT/$APP" ]]; then
+		return "$DOKKU_ROOT"
+	else
+		return
+	fi
+}
+
+set_pushover_settings() {
+	local APP="$1"
+	local TOKEN="$2"
+	local USER="$3"
+	local APP_PATH
+	if [[ $(is_param_app "$APP") -a -n "$APP" -a -n "$TOKEN" -a -n "$USER" ]]; then
+		APP_PATH="$DOKKU_ROOT/$APP"
+	elif [[ ! $(is_param_app "$APP") -n "$APP" -a -n "$TOKEN" ]]; then
+		APP_PATH="$DOKKU_ROOT"
+		USER="$TOKEN"
+		TOKEN="$APP"
+	else
+		echo "Please specify at least a token and user ID"
+		exit 1
+	fi
+
+	local CONFIG=$(cat<<EOF
+TOKEN="${TOKEN}"
+USER="${USER}"
+EOF
+)
+
+	echo "${CONFIG}" > "$APP_PATH/${PUSHOVER_CONFIG}"
+	return true
+}
+
+clear_pushover_settings() {
+
+}
+
+get_pushover_settings() {
+
+}

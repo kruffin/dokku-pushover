@@ -1,0 +1,13 @@
+source "$PLUGIN_PATH/pushover_dokku_defines"
+
+addToPipe() {
+	local MSG="$1"
+	if [[ -n "$MSG" ]]; then
+		echo "$MSG" >> ${PUSHOVER_PIPE}
+	fi
+}
+
+readFromPipe() {
+	local MSG
+	read MSG < ${PUSHOVER_PIPE}
+}
