@@ -20,7 +20,7 @@ case "$1" in
     ;;
 
   help)
-	get_pushover_help
+	  get_pushover_help
     ;;
 
   *)

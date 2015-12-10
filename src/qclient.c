@@ -5,8 +5,8 @@
 #include <signal.h>
 #include <inttypes.h>
 #include <string.h>
+#include "msg.h"
 
-#define MSG_SIZE       4096
 
 // This handler will be called when the queue 
 // becomes non-empty.
@@ -17,8 +17,8 @@ void handler (int sig_num) {
     
 void main (int argc, char **argv) {
 
-  if (argc != 2) {
-    printf("The message to post must be passed.\n usage: %s <message>", argv[0]);
+  if (argc != 3) {
+    printf("The token and message to post must be passed.\n usage: %s <token> <message>", argv[0]);
     _Exit(EXIT_FAILURE);
   }
 
@@ -27,12 +27,18 @@ void main (int argc, char **argv) {
   mqd_t mqdes;             // Message queue descriptors
   char buf[MSG_SIZE];              // A good-sized buffer
   unsigned int prio;               // Priority 
+  struct Message msgObj;           // The message to send
   mode_t mode  = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
     
   // First we need to set up the attribute structure
   attr.mq_maxmsg = 10;
   attr.mq_msgsize = MSG_SIZE;
   attr.mq_flags = 0;
+  buf[MSG_SIZE - 1] = '\0';
+
+  strcpy(msgObj.token, argv[1]);
+  strcpy(msgObj.text, argv[2]);
+  packMesageInString(&msgObj, buf);
 
   // Open a queue with the attribute structure
   mqdes = mq_open ("/qtest", O_RDWR | O_CREAT, 
@@ -40,15 +46,13 @@ void main (int argc, char **argv) {
     
   // Get the attributes for the test queue
   mq_getattr (mqdes, &attr);
-  printf ("%"PRIu64" messages are currently on the queue.\n", 
-          attr.mq_curmsgs);
 
   // We want to be notified when something is there 
   signal (SIGUSR1, handler);
   sigevent.sigev_signo = SIGUSR1;
   
   // Write the message
-  if (mq_send(mqdes, argv[1], strlen(argv[1]), 0) == -1) {
+  if (mq_send(mqdes, buf, MSG_SIZE, 0) == -1) {
     perror("mqsend() failed.");
   }
   

@@ -1,3 +1,4 @@
+#!/bin/bash
 
 source "$PLUGIN_PATH/pushover_dokku_defines"
 
@@ -58,9 +59,29 @@ EOF
 }
 
 clear_pushover_settings() {
+	local APP="$1"
+	if [[ $(is_param_app "$APP") -a -n "$APP" ]]; then
+		APP_PATH="$DOKKU_ROOT/$APP"
+	elif [[ -n "$APP" ]]; then
+		APP_PATH="$DOKKU_ROOT"
+	else
+		echo "Please specify an existing app or none to clear global configs."
+		exit 1;
+	fi
 
+	rm "$APP_PATH/${PUSHOVER_CONFIG}"
 }
 
 get_pushover_settings() {
+	local APP="$1"
+	if [[ $(is_param_app "$APP") -a -n "$APP" ]]; then
+		APP_PATH="$DOKKU_ROOT/$APP"
+	elif [[ -n "$APP" ]]; then
+		APP_PATH="$DOKKU_ROOT"
+	else
+		echo "Please specify an existing app or none to get global configs."
+		exit 1;
+	fi
 
+	cat "$APP_PATH/${PUSHOVER_CONFIG}"
 }
