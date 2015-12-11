@@ -1,4 +1,15 @@
-#!/bin/bash
+#!/user/bin/env bash
+export PUSHOVER_IMAGE_NAME=${PUSHOVER_IMAGE_NAME:="ubuntu"}
+export PUSHOVER_IMAGE_VERSION=${PUSHOVER_IMAGE_VERSION:="14.04"}
+export PUSHOVER_ROOT=${PUSHOVER_ROOT:="/var/lib/dokku/service/pushover"}
 
-PUSHOVER_CONFIG="pushover.config"
-PUSHOVER_URL="https://api.pushover.net/1/messages.json"
+
+export PUSHOVER_CONFIG="pushover.config"
+export PUSHOVER_URL="https://api.pushover.net/1/messages.json"
+
+
+export PLUGIN_IMAGE=$PUSHOVER_IMAGE_NAME
+export PLUGIN_IMAGE_VERSION=$PUSHOVER_IMAGE_VERSION
+export PLUGIN_DATA_ROOT=$PUSHOVER_ROOT
+export PLUGIN_SERVICE="PushoverQueue"
+export $PLUGIN_COMMAND_PREFIX="pushover"

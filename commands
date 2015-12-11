@@ -4,26 +4,30 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 PLUGIN_BASE_PATH="$PLUGIN_CORE_AVAILABLE_PATH"
 
 source "$PLUGIN_BASE_PATH/common/functions"
+source "$PLUGIN_PATH/pushover_dokku_defines"
 source "$PLUGIN_PATH/pushover_dokku_functions"
 
 case "$1" in
-  pushover:set)
+  ${PLUGIN_COMMAND_PREFIX}:create)
+    create_pushover_service
+    ;;
+  ${PLUGIN_COMMAND_PREFIX}:set)
     set_pushover_settings
     ;;
 
-  pushover:clear)
+  ${PLUGIN_COMMAND_PREFIX}:clear)
     clear_pushover_settings
     ;;
 
-  pushover:get)
+  ${PLUGIN_COMMAND_PREFIX}:get)
     get_pushover_settings
     ;;
 
-  help)
+  help | ${PLUGIN_COMMAND_PREFIX}:help)
 	  get_pushover_help
     ;;
 
   *)
-    exit $DOKKU_NOT_IMPLEMENTED_EXIT
+    exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
     ;;
 esac

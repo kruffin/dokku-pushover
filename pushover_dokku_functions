@@ -1,12 +1,14 @@
 #!/bin/bash
 
+source "$PLUGIN_BASE_PATH/common/functions"
 source "$PLUGIN_PATH/pushover_dokku_defines"
 
 get_pushover_help() {
 	cat<<EOF
-pushover:set [app] <token> <userId>, Set Pushover token and user ID to send messages to
-pushover:clear [app], Clears Pushover settings for the indicated app
-pushover:get [app], Display Pushover settings for the indicated app
+${PLUGIN_COMMAND_PREFIX}:create <name> Create a Pushover service
+${PLUGIN_COMMAND_PREFIX}:set [app] <token> <userId>, Set Pushover token and user ID to send messages to
+${PLUGIN_COMMAND_PREFIX}:clear [app], Clears Pushover settings for the indicated app
+${PLUGIN_COMMAND_PREFIX}:get [app], Display Pushover settings for the indicated app
 EOF
 }
 
@@ -32,6 +34,40 @@ get_app_path() {
 	fi
 }
 
+is_plugin_image_available() {
+	if ! docker images | grep -e "^$PLUGIN_IMAGE " | grep -q " $PLUGIN_IMAGE_VERSION " ; then
+      dokku_log_fail "$PLUGIN_SERVICE image $PLUGIN_IMAGE:$PLUGIN_IMAGE_VERSION not found"
+    fi
+}
+
+create_pushover_service() {
+	if [[ -z $1 ]]; then
+		dokku_log_fail "Please specify a name."
+	fi
+
+	local SERVICE="$1"
+	if [[ ! -d "${PLUGIN_DATA_ROOT}/${SERVICE}" ]];
+		dokku_log_fail "Pushover service ${SERVICE} already exists."
+	fi
+	SERVICE_ROOT="${PLUGIN_DATA_ROOT}/${SERVICE}";
+	LINKS_FILE="${SERVICE_ROOT}/LINKS"
+	is_plugin_image_available
+
+	mkdir -p "${SERVICE_ROOT}" || dokku_log_fail "Unable to create service directory"
+
+	dokku_log_info1 "Starting container"
+	echo "" > "${SERVICE_ROOT}/ENV"
+	SERVICE_NAME="dokku.${PLUGIN_COMMAND_PREFIX}.${SERVICE}"
+	ID=$(docker run --name "$SERVICE_NAME" -v "$SERVICE_ROOT/bin:/var/lib/pushover" --env-file="$SERVICE_ROOT/ENV" -d --restart always --label dokku=service --label dokku.service=pushover "$PLUGIN_IMAGE:$PLUGIN_IMAGE_VERSION" service pushover_server start)
+    echo "$ID" > "$SERVICE_ROOT/ID"
+
+    dokku_log_verbose_quiet "Waiting for container to be ready"
+    docker run --rm --link "$SERVICE_NAME:$PLUGIN_COMMAND_PREFIX" dokkupaas/wait > /dev/null
+
+    dokku_log_info2 "$PLUGIN_SERVICE container created: $SERVICE"
+    dokku "$PLUGIN_COMMAND_PREFIX:info" "$SERVICE"
+}
+
 set_pushover_settings() {
 	local APP="$1"
 	local TOKEN="$2"
@@ -44,8 +80,7 @@ set_pushover_settings() {
 		USER="$TOKEN"
 		TOKEN="$APP"
 	else
-		echo "Please specify at least a token and user ID"
-		exit 1
+		dokku_log_fail "Please specify at least a token and user ID"
 	fi
 
 	local CONFIG=$(cat<<EOF
@@ -65,8 +100,7 @@ clear_pushover_settings() {
 	elif [[ -n "$APP" ]]; then
 		APP_PATH="$DOKKU_ROOT"
 	else
-		echo "Please specify an existing app or none to clear global configs."
-		exit 1;
+		dokku_log_fail "Please specify an existing app or none to clear global configs."
 	fi
 
 	rm "$APP_PATH/${PUSHOVER_CONFIG}"
@@ -79,8 +113,7 @@ get_pushover_settings() {
 	elif [[ -n "$APP" ]]; then
 		APP_PATH="$DOKKU_ROOT"
 	else
-		echo "Please specify an existing app or none to get global configs."
-		exit 1;
+		dokku_log_fail "Please specify an existing app or none to get global configs."
 	fi
 
 	cat "$APP_PATH/${PUSHOVER_CONFIG}"
